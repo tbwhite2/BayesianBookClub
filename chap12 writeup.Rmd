@@ -4,23 +4,115 @@ author: "Bryan White"
 date: "December 9, 2015"
 output: html_document
 ---
+## Can Be thought of in two ways:
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+1. A generalization of regression where intercepts and slopes are allowed to vary by group
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+2. A regression with a categorical input variable representing group membership
 
+Most important here is in multilevel modeling, each level of the group is given a model, 
+this group level model is estimated simultaneously with the overall model.  So each coefficient has 
+a model and that is fit along with the data level model.
+
+## 12.2 Partial Pooling with no predictors
+In this section we discuss the radon homes example and compare partial pooling to complete and 
+no pooling methods
+
+Complete Pooling - In the radon example this would be to say that all counties are the same and that
+county level effects do not matter.  Thus the prediction would be the average across all counties
+
+
+
+Partial Pooling - In the radon example this would be saying there is a different average radon level 
+for each county
+
+*Lets Quickly look at some Complete Pooling versus partial Pooliong in* [STAN!](https://github.com/tbwhite2/BayesianBookClub/blob/master/12.3_PartialPoolingWithPredictors.R)
+
+Complete Pooling of the estimates ignores the variation between counties while no pooling overstates 
+it.
+
+**So partial pooling is especially important when:**
+
+1. There are a whole bunch of levels, and some may not be different from others
+
+2. There are varying amounts of data collected for each group - such that groups with small amounts 
+of data can still be used.
+
+Multilevel Models are a compromise between the two extremes!
+
+
+### Fig 12.1
 ![alt text](C:\\Users\\U774712\\Documents\\Personal/fig12.1.png)
 
+In partial pooling averages from counties with a smaller sample size carry less information and the 
+weighting pulls the estimate closer to the overall average.  Thus partial pooling becomes like a 
+weighted average to reflect the relative amount of information available about the individual county
+
+As the county (group) becomes infinitely large, the multilevel estimate approaches the group 
+average, conversely, as the group approaches 0, the estimate approaches the overall average 
+
+To actually apply these weights we need information on the the variation within and between
+counties.  In practice, we use lmer() or STAN to do that
+
+##12.3 Partial Pooling with Predictors
+This section considers partial pooling for a model with unit-level predictors
+
+Figure 12.2 shows the log home radon measurement vs floor of measurement
+
+### Fig 12.2
 ![alt text](C:\\Users\\U774712\\Documents\\Personal/fig12.2.png)
 
-```{r}
+This is what we would expect, though on pg 256, he says that the difference can be seen between 
+the partial pooling and no pooling most in Stearns and Ramsey counties, yet these have the most 
+similar estimates?
 
-```
+## Multilevel Analysis
 
-You can also embed plots, for example:
+In a multilevel model, a soft constraint is applied to the coefficients of the predictors that they
+have an assigned probability distribution informed by the data.  This has the effect of pulling the
+estimate toward the overall mean.
 
-```{r, echo=FALSE}
-plot(cars)
-```
+This is different from the hard constraint imposed by the no pooling model which defines each 
+parameter by OLS (fitting intercepts in a model run separately for each county)
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+As the group standard deviation gets large the pooling is reduced
+and as the group level standard deviation gets small the estimates are pulled to 0, yielding the 
+complete pooling estimate. Thus when there is a large difference between groups, we don't pool much
+
+### Fig 12.4
+![alt text](C:\\Users\\U774712\\Documents\\Personal/fig12.3.png)
+
+Very similar to the previous plot, he uses the 
+[lmer()](https://cran.r-project.org/web/packages/lme4/lme4.pdf) function to do replicate this plot,
+not sureif there is a way to do the same in STAN
+
+his method (and my wonderful comments) are [here](https://github.com/tbwhite2/BayesianBookClub/blob/master/12.4_FittingMLMinR.R)
+
+## Interpretation/diagnostics
+
+Hyperparameters - those model parameters without group level subscripts. These would include things
+like the overall regression line and the error standard deviations for the individual and county 
+level
+
+Variance ratio - feels super familiar - and is basically jsut the varainca at the group level
+divided by the variance at the individual level.  
+In this example this is .33^2/.76^2 = .19 ~ (1/5)
+This can be interpreted as the standard deviation of average radon levels between counties is the
+same as the standard deviation of the average of 5 measurements within a county - feels clunky.
+
+Intra Class Ratio
+This is the variance at the group level divided by the sum of the variance at the group and 
+individual level. 
+The number will range between 0-1 with 1 meaning all members of the group are identical.  
+
+In the radon example, for a county with a sample size less than 5, there is more information at the
+complete pooling level than at the county level.  This means that counties with samples greater
+than 5 will be further from the pooling estimate than those with less.
+
+Classical regression comparison - 
+Classical regression can be thought of as a special case of multilevel modeling (haha) as the 
+standard deviation between groups gets small we approach complete pooling, and as it gets larger 
+we approach no pooling
+
+If we have time, lets look at the group level parameters problem incorporating county 
+[uranium](https://github.com/tbwhite2/BayesianBookClub/blob/master/12.6_Group-LevelPredictors.R) levels
