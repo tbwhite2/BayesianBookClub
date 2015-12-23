@@ -3,7 +3,7 @@ library(ggplot2)
 ####################################
 #Data Stuff
 ####################################
-srrs2 <- read.table ("C:\\Users\\U774712\\Documents\\Personal\\BayesianBookClub\\example-models\\ARM\\Ch.12\\srrs2.dat", header=T, sep=",")
+srrs2 <- read.table ("C:\\Users\\U774712\\Documents\\Personal\\BayesianBookClub\\srrs2.dat", header=T, sep=",")
 mn <- srrs2$state=="MN"
 radon <- srrs2$activity[mn]
 log.radon <- log (ifelse (radon==0, .1, radon))
@@ -36,7 +36,7 @@ dataList.1 <- list(N=length(y), y=y,x=x)
 ####################################
 #Complete Pooling
 ####################################
-radon_complete_pool.sf1 <- stan(file='C:\\Users\\U774712\\Documents\\Personal\\BayesianBookClub\\example-models\\ARM\\Ch.12\\radon_complete_pool.stan',
+radon_complete_pool.sf1 <- stan(file='C:\\Users\\U774712\\Documents\\Personal\\BayesianBookClub\\radon_complete_pool.stan',
                                 data=dataList.1,
                                 iter=1000, chains=4)
 print(radon_complete_pool.sf1)
@@ -49,8 +49,8 @@ lm(y~x)
 #Complete Pooling
 ####################################
 dataList.2 <- list(N=length(y), y=y,x=x,county=county)
-radon_no_pool.sf1 <- stan(file='C:\\Users\\U774712\\Documents\\Personal\\BayesianBookClub\\example-models\\ARM\\Ch.12\\radon_no_pool.stan', data=dataList.2,
-                          iter=1000, chains=4)
+radon_no_pool.sf1 <- stan(file='C:\\Users\\U774712\\Documents\\Personal\\BayesianBookClub\\radon_no_pool.stan', data=dataList.2,
+                          iter=2000, chains=4)
 print(radon_no_pool.sf1)
 post.unpooled <- extract(radon_no_pool.sf1)
 unpooled <- colMeans(post.unpooled$a) #Mean intercept fit for each county
@@ -63,11 +63,11 @@ for (n in 1:85) {
 #Plot Stuff
 ####################################
 ## Comparing-complete pooling & no-pooling (Figure 12.2)
-x.jitter <- x + runif(n,-.05,.05)
+# x.jitter <- x + runif(n,-.05,.05)
 display8 <- c (36, 1, 35, 21, 14, 71, 61, 70)  # counties to be displayed
 y.range <- range (y[!is.na(match(county,display8))])
 
-radon.data <- data.frame(y, x.jitter, county)
+radon.data <- data.frame(y, x, county)
 radon8.data <- subset(radon.data, county %in% display8)
 radon8.data$county.name <- radon8.data$county
 radon8.data$county.name <- factor(radon8.data$county.name,levels=c("36","1","35","21","14","71","61","70"),
@@ -79,7 +79,7 @@ radon8.data$pooled.slope <- pooled[2]
 radon8.data$unpooled.int <- unpooled[radon8.data$county]
 radon8.data$unpooled.slope <- mean(post.unpooled$beta)
 
-p1 <- ggplot(radon8.data, aes(x.jitter, y)) +
+p1 <- ggplot(radon8.data, aes(x, y)) +
       geom_jitter(position = position_jitter(width = .05, height = 0)) +
       scale_x_continuous(breaks=c(0,1), labels=c("0", "1")) +
       geom_abline(aes(intercept = pooled.int, slope = pooled.slope), linetype = "dashed") +

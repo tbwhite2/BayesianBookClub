@@ -33,10 +33,8 @@ it.
 
 **So partial pooling is especially important when:**
 
-1. There are a whole bunch of levels, and some may not be different from others
 
-2. There are varying amounts of data collected for each group - such that groups with small amounts 
-of data can still be used.
+*There are varying amounts of data collected for each group - such that groups with small amounts of data can still be used.*
 
 Multilevel Models are a compromise between the two extremes!
 
